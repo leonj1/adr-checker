@@ -2,6 +2,7 @@ import requests
 import sys
 import argparse
 import urllib.parse
+import os
 
 def validate_args(args):
     if not args.access_token or args.access_token.isspace():
