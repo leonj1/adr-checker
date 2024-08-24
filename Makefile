@@ -16,7 +16,7 @@ run:
 		echo "Example: make run REPO=group/project"; \
 		exit 1; \
 	fi
-	docker run --name $(CONTAINER_NAME) $(IMAGE_NAME) $(REPO)
+	docker run --rm --name $(CONTAINER_NAME) $(IMAGE_NAME) $(REPO)
 
 # Clean up: stop and remove the container, then remove the image
 clean:
