@@ -5,6 +5,12 @@ import urllib.parse
 import os
 from collections import defaultdict
 
+# ANSI color codes
+GREEN = "\033[92m"
+RED = "\033[91m"
+GREY = "\033[90m"
+RESET = "\033[0m"
+
 def read_members_file(filename='members.txt'):
     try:
         with open(filename, 'r') as f:
@@ -84,12 +90,12 @@ def main():
             else:
                 for user in members:
                     if user in mr['thumbs_up']:
-                        print(f"    [✓] {user}")
+                        print(f"    [✓] {GREEN}{user}{RESET}")
                     else:
-                        print(f"    [X] {user}")
+                        print(f"    [X] {RED}{user}{RESET}")
                 for user in mr['thumbs_up']:
                     if user not in members:
-                        print(f"    [?] {user} (not in members list)")
+                        print(f"    [?] {GREY}{user}{RESET} (not in members list)")
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
