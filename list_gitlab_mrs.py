@@ -31,11 +31,15 @@ def fetch_open_merge_requests(base_url, project_id, access_token):
 
 def main():
     parser = argparse.ArgumentParser(description="Fetch open merge requests from a GitLab repository")
+    parser.add_argument("project", help="GitLab project path (e.g., 'username/project' or 'group/subgroup/project')")
     parser.add_argument("--access_token", help="GitLab personal access token")
     parser.add_argument("--base-url", default="https://gitlab.com", help="GitLab instance URL (default: https://gitlab.com)")
-    parser.add_argument("--project", required=True, help="GitLab project path (e.g., 'username/project' or 'group/subgroup/project')")
 
     args = parser.parse_args()
+
+    # If access_token is not provided as an argument, try to get it from the environment variable
+    if not args.access_token:
+        args.access_token = os.environ.get('GITLAB_ACCESS_TOKEN')
 
     try:
         validate_args(args)

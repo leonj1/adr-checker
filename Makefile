@@ -20,7 +20,8 @@ run:
 		echo "Warning: GITLAB_ACCESS_TOKEN is not set. Using the default (empty) token."; \
 	fi
 	docker run --rm --name $(CONTAINER_NAME) \
-		$(IMAGE_NAME) $(REPO) --access_token=$(GITLAB_ACCESS_TOKEN) --project=$(REPO)
+		-e GITLAB_ACCESS_TOKEN=$(GITLAB_ACCESS_TOKEN) \
+		$(IMAGE_NAME) $(REPO)
 
 # Clean up: stop and remove the container, then remove the image
 clean:
