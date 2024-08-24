@@ -1,48 +1,55 @@
-import sys
-import os
 import requests
-from urllib.parse import quote_plus
+import sys
+import argparse
+import urllib.parse
 
-def get_merge_requests(project_id, access_token):
-    base_url = "https://gitlab.com/api/v4"
-    endpoint = f"/projects/{project_id}/merge_requests"
-    params = {
-        "state": "opened",
-        "order_by": "created_at",
-        "sort": "desc"
-    }
+def validate_args(args):
+    if not args.access_token or args.access_token.isspace():
+        raise ValueError("Access token is required and cannot be empty.")
+    if not args.project or args.project.isspace():
+        raise ValueError("Project path is required and cannot be empty.")
+
+def get_project_id(base_url, project_path, access_token):
+    encoded_path = urllib.parse.quote(project_path, safe='')
+    url = f"{base_url}/api/v4/projects/{encoded_path}"
     headers = {"Authorization": f"Bearer {access_token}"}
-    
-    response = requests.get(f"{base_url}{endpoint}", params=params, headers=headers)
-    
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print(f"Error: Unable to fetch merge requests. Status code: {response.status_code}")
-        return None
+
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+
+    return response.json()['id']
+
+def fetch_open_merge_requests(base_url, project_id, access_token):
+    url = f"{base_url}/api/v4/projects/{project_id}/merge_requests"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    params = {"state": "opened"}
+
+    response = requests.get(url, headers=headers, params=params)
+    response.raise_for_status()
+
+    return response.json()
 
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: python list_gitlab_mrs.py <repository_path>")
-        print("Example: python list_gitlab_mrs.py group/project")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Fetch open merge requests from a GitLab repository")
+    parser.add_argument("--access_token", help="GitLab personal access token")
+    parser.add_argument("--base-url", default="https://gitlab.com", help="GitLab instance URL (default: https://gitlab.com)")
+    parser.add_argument("--project", required=True, help="GitLab project path (e.g., 'username/project' or 'group/subgroup/project')")
 
-    access_token = os.environ.get('GITLAB_ACCESS_TOKEN')
-    if not access_token:
-        print("Error: GITLAB_ACCESS_TOKEN environment variable is not set.")
-        sys.exit(1)
+    args = parser.parse_args()
 
-    repo_path = sys.argv[1]
-    encoded_repo_path = quote_plus(repo_path)
+    try:
+        validate_args(args)
 
-    merge_requests = get_merge_requests(encoded_repo_path, access_token)
+        project_id = get_project_id(args.base_url, args.project, args.access_token)
+        print(f"Fetched project ID: {project_id}")
 
-    if merge_requests:
-        print(f"Open Merge Requests for {repo_path}:")
+        merge_requests = fetch_open_merge_requests(args.base_url, project_id, args.access_token)
+        print(f"\nOpen Merge Requests for project {args.project}:")
         for mr in merge_requests:
-            print(f"#{mr['iid']} - {mr['title']} (Created: {mr['created_at']})")
-    else:
-        print("No merge requests found or an error occurred.")
+            print(f"- [{mr['iid']}] {mr['title']} (by {mr['author']['name']})")
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
