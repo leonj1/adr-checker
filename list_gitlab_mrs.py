@@ -5,6 +5,14 @@ import urllib.parse
 import os
 from collections import defaultdict
 
+def read_members_file(filename='members.txt'):
+    try:
+        with open(filename, 'r') as f:
+            return set(line.strip() for line in f if line.strip())
+    except FileNotFoundError:
+        print(f"Warning: {filename} not found. Proceeding without member list.", file=sys.stderr)
+        return set()
+
 def validate_args(args):
     if not args.access_token or args.access_token.isspace():
         raise ValueError("Access token is required and cannot be empty.")
@@ -65,12 +73,23 @@ def main():
         project_id = get_project_id(args.base_url, args.project, args.access_token)
         print(f"Fetched project ID: {project_id}")
 
+        members = read_members_file()
         merge_requests = fetch_open_merge_requests(args.base_url, project_id, args.access_token)
         print(f"\nOpen Merge Requests for project {args.project}:")
         for mr in merge_requests:
-            thumbs_up = ", ".join(mr['thumbs_up']) if mr['thumbs_up'] else "None"
             print(f"- [{mr['iid']}] {mr['title']} (by {mr['author']['name']})")
-            print(f"  Thumbs up: {thumbs_up}")
+            print("  Thumbs up:")
+            if not mr['thumbs_up']:
+                print("    None")
+            else:
+                for user in members:
+                    if user in mr['thumbs_up']:
+                        print(f"    [✓] {user}")
+                    else:
+                        print(f"    [X] {user}")
+                for user in mr['thumbs_up']:
+                    if user not in members:
+                        print(f"    [?] {user} (not in members list)")
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
