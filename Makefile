@@ -13,7 +13,7 @@ build:
 run:
 	@if [ -z "$(REPO)" ]; then \
 		echo "Usage: make run REPO=<repository_path> [GITLAB_ACCESS_TOKEN=<your_token>]"; \
-		echo "Example: make run REPO=group/project GITLAB_ACCESS_TOKEN=your_token_here"; \
+		echo "Example: make run REPO=gitlab-org/gitlab GITLAB_ACCESS_TOKEN=your_token_here"; \
 		exit 1; \
 	fi
 	@if [ -z "$(GITLAB_ACCESS_TOKEN)" ]; then \
